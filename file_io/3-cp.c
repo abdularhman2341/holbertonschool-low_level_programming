@@ -24,6 +24,7 @@ char *create_buffer(char *file)
 
 	return (buffer);
 }
+
 /**
  * close_file - closes file descriptors
  * @fd: the file descriptor to be closed
@@ -40,6 +41,40 @@ void close_file(int fd)
 		exit(100);
 	}
 }
+
+/**
+ * copy_file - copies content from source fd to destination fd
+ * @from: source file descriptor
+ * @to: destination file descriptor
+ * @buffer: buffer for reading data
+ * @argv: argument vector
+ */
+void copy_file(int from, int to, char *buffer, char *argv[])
+{
+	ssize_t r, w;
+
+	r = read(from, buffer, 1024);
+
+	while (r > 0)
+	{
+		w = write(to, buffer, r);
+		if (w == -1 || w != r)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
+			free(buffer);
+			exit(99);
+		}
+		r = read(from, buffer, 1024);
+	}
+
+	if (r == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		free(buffer);
+		exit(98);
+	}
+}
+
 /**
  * main - copies the contents of a file to another file
  * @argc: the number of arguments supplied to the program
@@ -49,7 +84,7 @@ void close_file(int fd)
  */
 int main(int argc, char *argv[])
 {
-	int from, to, r, w;
+	int from, to;
 	char *buffer;
 
 	if (argc != 3)
@@ -59,32 +94,25 @@ int main(int argc, char *argv[])
 	}
 
 	buffer = create_buffer(argv[2]);
+
 	from = open(argv[1], O_RDONLY);
-	r = read(from, buffer, 1024);
+	if (from == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		free(buffer);
+		exit(98);
+	}
+
 	to = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
+	if (to == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
+		free(buffer);
+		close_file(from);
+		exit(99);
+	}
 
-	do {
-		if (from == -1 || r == -1)
-		{
-			dprintf(STDERR_FILENO,
-				"Error: Can't read from file %s\n", argv[1]);
-			free(buffer);
-			exit(98);
-		}
-
-		w = write(to, buffer, r);
-		if (to == -1 || w == -1)
-		{
-			dprintf(STDERR_FILENO,
-				"Error: Can't write to %s\n", argv[2]);
-			free(buffer);
-			exit(99);
-		}
-
-		r = read(from, buffer, 1024);
-		to = open(argv[2], O_WRONLY | O_APPEND);
-
-	} while (r > 0);
+	copy_file(from, to, buffer, argv);
 
 	free(buffer);
 	close_file(from);
@@ -92,4 +120,3 @@ int main(int argc, char *argv[])
 
 	return (0);
 }
-
