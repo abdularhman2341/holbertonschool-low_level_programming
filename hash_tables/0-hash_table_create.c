@@ -1,32 +1,35 @@
-#include <stdlib.h>
-#include "binary_trees.h"
+#include "hash_tables.h"
 
 /**
- * binary_tree_node - Creates a binary tree node
- * @parent: Pointer to the parent node of the node to create
- * @value: Value to put in the new node
+ * hash_table_create - Creates a hash table.
+ * @size: The size of the array.
  *
- * Return: A pointer to the new node, or NULL on failure
+ * Return: A pointer to the newly created hash table, or NULL on failure.
  */
-
-
-binary_tree_t *binary_tree_node(binary_tree_t *parent, int value)
+hash_table_t *hash_table_create(unsigned long int size)
 {
-	binary_tree_t *new_node;
+	hash_table_t *ht;
+	unsigned long int i;
 
-	new_node = malloc(sizeof(binary_tree_t));
+	if (size == 0)
+		return (NULL);
+
+	ht = malloc(sizeof(hash_table_t));
+	if (ht == NULL)
+		return (NULL);
+
+	ht->size = size;
 
 
-	if (new_node == NULL)
+	ht->array = malloc(sizeof(hash_node_t *) * size);
+	if (ht->array == NULL)
 	{
+		free(ht);
 		return (NULL);
 	}
 
-	new_node->n = value;
-	new_node->parent = parent;
+	for (i = 0; i < size; i++)
+		ht->array[i] = NULL;
 
-	new_node->left = NULL;
-	new_node->right = NULL;
-
-	return (new_node);
+	return (ht);
 }
